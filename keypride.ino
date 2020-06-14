@@ -16,10 +16,14 @@
 #define LED_TYPE    WS2811
 #define COLOR_ORDER GRB
 #define NUM_LEDS    15
-#define BRIGHTNESS  255
 
+// Samples to average to read the pwm backlight level
 #define N_SAMPLES 40
+
+// Period of the polling timer for the volume encoder
 #define T_POLLING 2
+
+// Period of the light effects refresh
 #define T_EFFECT  20
 
 // Thresholds
@@ -39,10 +43,19 @@ ClickRotary *volumeEncoder;
 Timer *effectsTimer;
 Timer *pollingTimer;
 
+enum Brightness
+{
+	LIGHT_OFF  = 0,
+	LIGHT_MID  = 128,
+	LIGHT_HIGH = 255
+};
+
 uint16_t lightLevels[N_SAMPLES];
 uint8_t  lightSampleIndex;
+Brightness brightness;
 
 uint16_t scrollLockLevel;
+bool scrollLockOn;
 
 void setup() {
 	delay(3000); // 3 second delay for recovery
@@ -66,10 +79,10 @@ void setup() {
 	// tell FastLED about the LED strip configuration
 	FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS)
 		.setCorrection(TypicalLEDStrip)
-		.setDither(BRIGHTNESS < 255);
+		.setDither(true);
 
 	// set master brightness control
-	FastLED.setBrightness(BRIGHTNESS);
+	FastLED.setBrightness(0);
 }
 
 
@@ -77,15 +90,25 @@ void loop()
 {
 	if (effectsTimer->expired())
 	{
-		pride();
-		FastLED.show();
-
 		uint16_t lightLevel = 0;
 		for (int i = 0; i < N_SAMPLES; ++i)
 			lightLevel += lightLevels[i];
 
-		Serial.println(scrollLockLevel);
+		brightness = LIGHT_MID;
+		if (lightLevel < BACKLIGHT_LOW)
+			brightness = LIGHT_OFF;
+		else if (lightLevel > BACKLIGHT_MID)
+			brightness = LIGHT_HIGH;
 
+		scrollLockOn = (scrollLockLevel < SCROLLLOCK_OFF); // LED is common anode, so the adc will read max value when it is off
+
+		// set master brightness control
+		FastLED.setBrightness(brightness);
+
+		//Serial.println(scrollLockLevel);
+		// Show effect (todo: cycle)
+		pride();
+		FastLED.show();
 	}
 
 
