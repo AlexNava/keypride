@@ -41,17 +41,17 @@ void ClickRotary::checkPins()
 	case 0b0010:
 		currDir = -1;
 		break;
-  case 0b0011:
-  case 0b1100:
+	case 0b0011:
+	case 0b1100:
 		currDir = 0; // undefined
-    // leave value unchanged when polling in the same position
+	// leave value unchanged when polling in the same position
 	}
 
 	if ((currBits == 0b00) || (currBits == 0b11)) // click
 	{
 		if (currDir == prevDir)
 			currValue += currDir;
-    currDir = 0;
+		currDir = 0;
 	}
 
 	if (rollout)
