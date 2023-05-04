@@ -78,6 +78,10 @@ int16_t ClickRotary::getValue()
 int16_t ClickRotary::getDelta()
 {
 	int16_t result = currValue - prevValue;
+	if (result > (maxValue / 2))
+		result -= (maxValue + 1);
+	else if (result < (-maxValue / 2))
+		result += (maxValue + 1);
 	prevValue = currValue;
 	return result;
 }
